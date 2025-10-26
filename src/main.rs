@@ -85,18 +85,21 @@ async fn process_interface(interface: &str, wan_name: &str) -> Result<()> {
 async fn run_speedtest(interface: String) -> Result<f64> {
     // シェルスクリプトを使用してスピードテストを実行
     let output = Command::new("./run_speedtest.sh")
-        .arg(interface)
+        .arg(&interface)
         .output()
         .context("Failed to execute speedtest script")?;
 
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
     if !output.status.success() {
         anyhow::bail!(
-            "Speedtest failed: {}",
-            String::from_utf8_lossy(&output.stderr)
+            "Speedtest script failed with exit code: {:?}\nStdout: {}\nStderr: {}",
+            output.status.code(),
+            stdout,
+            stderr
         );
     }
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
 
     // "Download speed: XXX.XX Mbps" を抽出（複数スペースに対応）
     let re = Regex::new(r"Download\s+speed:\s+([\d.]+)\s+Mbps")?;
@@ -105,7 +108,11 @@ async fn run_speedtest(interface: String) -> Result<f64> {
         let speed = caps[1].parse::<f64>()?;
         Ok(speed)
     } else {
-        anyhow::bail!("Could not parse download speed from output: {}", stdout);
+        anyhow::bail!(
+            "Could not parse download speed from output:\nStdout: {}\nStderr: {}",
+            stdout,
+            stderr
+        );
     }
 }
 
