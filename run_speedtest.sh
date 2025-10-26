@@ -20,4 +20,4 @@ fi
 
 # bunxコマンドを実行（環境によってはbunxのパスを指定する必要があります）
 # --bind-address でIPを指定して特定のインターフェースから接続
-bunx speed-cloudflare-cli
+~/.bun/bin/bunx speed-cloudflare-cli
