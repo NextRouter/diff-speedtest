@@ -14,11 +14,7 @@ echo -e "${GREEN}=== Diff Speedtest Runner ===${NC}"
 
 # speedtestのインストール確認
 if ! command -v speedtest &> /dev/null; then
-    echo -e "${RED}Error: speedtest is not installed${NC}"
-    echo -e "${YELLOW}Please install speedtest-cli from Ookla:${NC}"
-    echo "  curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash"
-    echo "  sudo apt-get install speedtest"
-    exit 1
+    sudo snap install speedtest-cli
 fi
 
 # プログラムのビルド
