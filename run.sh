@@ -6,9 +6,14 @@ set -e
 echo "Building Rust project..."
 cargo build --release
 
-sudo apt install unzip -y
-curl -fsSL https://bun.com/install | bash
-source /home/user/.bashrc
+if [ which bunx >/dev/null 2>&1 ]; then
+    echo "bunx is already installed."
+else
+    echo "bunx is not installed. Installing bun..."
+    sudo apt install unzip -y
+    curl -fsSL https://bun.sh/install | bash
+    source ~/.bashrc
+fi
 
 echo ""
 echo "Setting execute permissions on run_speedtest.sh..."

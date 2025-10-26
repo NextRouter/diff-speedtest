@@ -63,7 +63,7 @@ let nics = vec![("eth0", "wan0"), ("eth1", "wan1")];
 ### エンドポイント
 
 - **Prometheus**: `http://localhost:9090`
-- **API**: `http://localhost:32600/tcpflow?value={値}&nic={nic}`
+- **API**: `http://localhost:32600/tcpflow?value={date}&nic={nic}`
 
 ## 処理フロー
 

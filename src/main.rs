@@ -16,12 +16,14 @@ struct PrometheusData {
 
 #[derive(Debug, Deserialize)]
 struct PrometheusResult {
+    #[allow(dead_code)]
     metric: PrometheusMetric,
     value: (f64, String),
 }
 
 #[derive(Debug, Deserialize)]
 struct PrometheusMetric {
+    #[allow(dead_code)]
     interface: String,
 }
 
@@ -33,34 +35,49 @@ async fn main() -> Result<()> {
     for (interface, wan_name) in nics {
         println!("Processing interface: {} ({})", interface, wan_name);
 
-        // 1. スピードテストを実行してDownload speedを取得
-        let download_speed = run_speedtest(interface.to_string())
-            .await
-            .context(format!("Failed to run speedtest for {}", interface))?;
+        // エラーが発生しても次のNICの処理を続ける
+        let result = process_interface(interface, wan_name).await;
 
-        println!("  Download speed: {:.2} Mbps", download_speed);
-
-        // 2. Prometheusからトラフィックデータを取得
-        let tcp_bandwidth = query_prometheus(interface)
-            .await
-            .context(format!("Failed to query Prometheus for {}", interface))?;
-
-        println!("  TCP bandwidth: {:.2} bps", tcp_bandwidth);
-
-        // 3. 計算: Download speed (Mbps) / TCP bandwidth (bps)
-        // Download speedをMbpsからbpsに変換
-        let download_speed_bps = download_speed * 1_000_000.0;
-        let ratio = download_speed_bps / tcp_bandwidth;
-
-        println!("  Calculated ratio: {:.6}", ratio);
-
-        // 4. APIにPOST
-        send_to_api(ratio, wan_name)
-            .await
-            .context(format!("Failed to send to API for {}", wan_name))?;
-
-        println!("  Successfully sent to API\n");
+        match result {
+            Ok(_) => println!("  Successfully completed for {}\n", interface),
+            Err(e) => {
+                eprintln!("  Error processing {}: {}\n", interface, e);
+                continue;
+            }
+        }
     }
+
+    Ok(())
+}
+
+async fn process_interface(interface: &str, wan_name: &str) -> Result<()> {
+    // 1. スピードテストを実行してDownload speedを取得
+    let download_speed = run_speedtest(interface.to_string())
+        .await
+        .context(format!("Failed to run speedtest for {}", interface))?;
+
+    println!("  Download speed: {:.2} Mbps", download_speed);
+
+    // 2. Prometheusからトラフィックデータを取得
+    let tcp_bandwidth = query_prometheus(interface)
+        .await
+        .context(format!("Failed to query Prometheus for {}", interface))?;
+
+    println!("  TCP bandwidth: {:.2} bps", tcp_bandwidth);
+
+    // 3. 計算: Download speed (Mbps) / TCP bandwidth (bps)
+    // Download speedをMbpsからbpsに変換
+    let download_speed_bps = download_speed * 1_000_000.0;
+    let ratio = download_speed_bps / tcp_bandwidth;
+
+    println!("  Calculated ratio: {:.6}", ratio);
+
+    // 4. APIに送信
+    send_to_api(ratio, wan_name)
+        .await
+        .context(format!("Failed to send to API for {}", wan_name))?;
+
+    println!("  Successfully sent to API");
 
     Ok(())
 }
@@ -81,8 +98,8 @@ async fn run_speedtest(interface: String) -> Result<f64> {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
 
-    // "Download speed: XXX.XX Mbps" を抽出
-    let re = Regex::new(r"Download speed:\s+([\d.]+)\s+Mbps")?;
+    // "Download speed: XXX.XX Mbps" を抽出（複数スペースに対応）
+    let re = Regex::new(r"Download\s+speed:\s+([\d.]+)\s+Mbps")?;
 
     if let Some(caps) = re.captures(&stdout) {
         let speed = caps[1].parse::<f64>()?;
