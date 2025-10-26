@@ -79,15 +79,31 @@ async fn process_interface(config: &InterfaceConfig) -> Result<()> {
 }
 
 fn run_speedtest(interface: &str) -> Result<f64> {
+    println!("  Running: speedtest -s 48463 -I {}", interface);
+    
     let output = Command::new("speedtest")
         .args(&["-s", "48463", "-I", interface])
         .output()
         .context("Failed to execute speedtest")?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    // デバッグ用に出力を表示
+    if !stdout.is_empty() {
+        println!("  STDOUT:\n{}", stdout);
+    }
+    if !stderr.is_empty() {
+        println!("  STDERR:\n{}", stderr);
+    }
 
     if !output.status.success() {
-        anyhow::bail!("Speedtest failed: {}", stdout);
+        anyhow::bail!(
+            "Speedtest failed with exit code {:?}\nSTDOUT: {}\nSTDERR: {}",
+            output.status.code(),
+            stdout,
+            stderr
+        );
     }
 
     // Downloadの値を抽出

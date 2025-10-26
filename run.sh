@@ -25,6 +25,13 @@ cargo build --release
 
 # プログラムの実行
 echo -e "${GREEN}Running diff-speedtest...${NC}"
-sudo ./target/release/diff-speedtest
+
+# sudoが必要かどうかを確認
+if [ "$EUID" -ne 0 ]; then
+    echo -e "${YELLOW}Note: Running with sudo for network interface access${NC}"
+    sudo ./target/release/diff-speedtest
+else
+    ./target/release/diff-speedtest
+fi
 
 echo -e "${GREEN}=== Completed ===${NC}"
