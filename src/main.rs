@@ -80,7 +80,7 @@ async fn process_interface(config: &InterfaceConfig) -> Result<()> {
 
 fn run_speedtest(interface: &str) -> Result<f64> {
     println!("  Running: speedtest -s 48463 -I {}", interface);
-    
+
     let output = Command::new("speedtest")
         .args(&["-s", "48463", "-I", interface])
         .output()
