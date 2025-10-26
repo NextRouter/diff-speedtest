@@ -6,7 +6,7 @@ set -e
 echo "Building Rust project..."
 cargo build --release
 
-if [ which bunx >/dev/null 2>&1 ]; then
+if [ -f /home/user/.bun/bin/bunx ]; then
     echo "bunx is already installed."
 else
     echo "bunx is not installed. Installing bun..."
