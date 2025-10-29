@@ -29,7 +29,7 @@ echo -e "${GREEN}Running diff-speedtest...${NC}"
 curl "http://localhost:32600/tcpflow?value=1&nic=eth0"
 curl "http://localhost:32600/tcpflow?value=1&nic=eth1"
 
-sleep 2
+sleep 1
 
 # sudoが必要かどうかを確認
 if [ "$EUID" -ne 0 ]; then
