@@ -65,26 +65,26 @@ async fn main() -> Result<()> {
         );
     }
 
-    // すべてのインターフェースのspeedtestを並行実行
-    let speedtest_tasks: Vec<_> = interfaces
-        .iter()
-        .map(|config| {
-            let nic_name = config.nic_name.clone();
-            tokio::task::spawn_blocking(move || {
-                println!("  Starting speedtest for {}", nic_name);
-                run_speedtest(&nic_name)
-            })
-        })
-        .collect();
-
-    // すべてのspeedtestの完了を待つ
+    // インターフェースのspeedtestを順次実行（干渉を避けるため）
     let mut speedtest_results = Vec::new();
-    for (i, task) in speedtest_tasks.into_iter().enumerate() {
-        let result = task.await.context("Speedtest task panicked")??;
+    for (i, config) in interfaces.iter().enumerate() {
+        println!(
+            "  Starting speedtest for {} ({}/{})",
+            config.nic_name,
+            i + 1,
+            interfaces.len()
+        );
+        let result = tokio::task::spawn_blocking({
+            let nic_name = config.nic_name.clone();
+            move || run_speedtest(&nic_name)
+        })
+        .await
+        .context("Speedtest task panicked")??;
+
         speedtest_results.push(result);
         println!(
             "  ✓ Speedtest completed for {}: {} Mbps",
-            interfaces[i].nic_name, result
+            config.nic_name, result
         );
     }
 
